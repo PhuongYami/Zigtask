@@ -11,6 +11,11 @@ import { SignUpDto } from './dto/signup.dto';
 import { SignInDto } from './dto/signin.dto';
 import { User } from '../users/entities/user.entity';
 
+export interface JwtPayload {
+  sub: string;
+  email: string;
+}
+
 @Injectable()
 export class AuthService
 {
@@ -21,7 +26,7 @@ export class AuthService
 
     async signUp ( signUpDto: SignUpDto ): Promise<{ message: string }>
     {
-        const { email } = signUpDto;
+        const { email, password } = signUpDto;
 
         // 1. Kiểm tra xem email đã tồn tại chưa
         const existingUser = await this.usersService.findOneByEmail( email );
@@ -48,17 +53,20 @@ export class AuthService
         }
 
         // 2. So sánh mật khẩu
-        const isPasswordMatching = await bcrypt.compare( password, user.password );
-        if ( !isPasswordMatching )
+        const isPasswordValid = await bcrypt.compare( password, user.password );
+        if ( !isPasswordValid )
         {
             throw new UnauthorizedException( 'Invalid credentials' );
         }
 
         // 3. Tạo JWT Payload
-        const payload = { sub: user.id, email: user.email };
-
+        const payload: JwtPayload = { 
+          sub: user.id, 
+          email: user.email 
+        };
+        
         // 4. Ký và trả về token
-        const accessToken = await this.jwtService.signAsync( payload );
+        const accessToken = this.jwtService.sign( payload );
 
         return { accessToken };
     }

@@ -23,7 +23,7 @@ export class AuthController
     }
 
     @Get( '/me' )
-    @UseGuards( AuthGuard() ) // Bảo vệ route này
+    @UseGuards( AuthGuard('jwt') ) // Bảo vệ route này với JWT strategy
     getProfile ( @GetUser() user: User ): ResponseUserDto
     {
         // Trả về dữ liệu đã được định dạng, loại bỏ password

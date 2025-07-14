@@ -5,10 +5,15 @@ import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { User } from './entities/user.entity';
 
-@Module( {
-  imports: [ TypeOrmModule.forFeature( [ User ] ) ],
-  controllers: [ UsersController ],
-  providers: [ UsersService ],
-  exports: [ UsersService ], // <-- EXPORT SERVICE NÀY
-} )
-export class UsersModule { }
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([User]),
+  ],
+  controllers: [UsersController],
+  providers: [UsersService],
+  exports: [
+    UsersService,
+    TypeOrmModule, // Export TypeOrmModule to make UserRepository available to other modules
+  ],
+})
+export class UsersModule {}

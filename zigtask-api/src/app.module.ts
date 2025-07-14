@@ -1,25 +1,36 @@
-// src/app.module.ts
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { TasksModule } from './tasks/tasks.module';
+import { User } from './users/entities/user.entity';
+import { Task } from './tasks/entities/task.entity';
 
-@Module( {
+@Module({
   imports: [
-    ConfigModule.forRoot( { isGlobal: true } ), // Để có thể truy cập biến môi trường ở mọi nơi
-    TypeOrmModule.forRoot( {
-      type: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt( process.env.DB_PORT || '5432', 10 ),
-      username: process.env.DB_USERNAME || 'postgres',
-      password: process.env.DB_PASSWORD || 'postgres',
-      database: process.env.DB_DATABASE || 'zigtask',
-      autoLoadEntities: true, // Tự động load các entities
-      synchronize: true, // Chỉ dùng cho development, tự động tạo bảng
-    } ), UsersModule, AuthModule, TasksModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get('DB_HOST', 'localhost'),
+        port: configService.get<number>('DB_PORT', 5432),
+        username: configService.get('DB_USERNAME', 'postgres'),
+        password: configService.get('DB_PASSWORD', 'postgres'),
+        database: configService.get('DB_DATABASE', 'zigtask'),
+        entities: [User, Task],
+        synchronize: configService.get('NODE_ENV') !== 'production',
+        logging: configService.get('NODE_ENV') === 'development',
+      }),
+    }),
+    UsersModule,
+    AuthModule,
+    TasksModule,
   ],
-  // ...
-} )
-export class AppModule { }
+})
+export class AppModule {}
